@@ -1,6 +1,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include "net.h"
+#include "inference_engine.h"
 
 int main()
 {
