@@ -21,6 +21,10 @@ int main()
     float confidence =0.0f;
     std::cout << "开始进行实时推理... " << std::endl << "按下ESC键可退出" << std::endl;
 
+    // 创建一个可调整大小的窗口
+    cv::namedWindow("NCNN Edge Deployment Demo", cv::WINDOW_NORMAL);
+    cv::resizeWindow("NCNN Edge Deployment Demo", 1200, 800);
+
     //循环处理视频流
     while(true){
         //开始时间
@@ -41,25 +45,26 @@ int main()
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
 
         //计算FPS
-        float fps = 1000.f / (duration.count() + 1e-5);
+        float fps = 1000000.f / (duration.count() + 1e-5);
 
         //结果可视化（置信度大于0.6时）
         if(confidence > 0.6f){
             std::string label = "Class" + std::to_string(class_id) + "Conf" + std::to_string(confidence) .substr(0,4); //置信度取4位
-            cv::putText(frame, label, cv::Point(10, 30), cv::FONT_HERSHEY_SCRIPT_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2); //放置标签
+            cv::putText(frame, label, cv::Point(10, 30), cv::FONT_HERSHEY_DUPLEX, 1.2, cv::Scalar(0, 255, 0), 3); //放置标签
         }
 
         //标注FPS
         std::string fps_label = "FPS: " + std::to_string(fps).substr(0, 4);
-        cv::putText(frame, fps_label, cv::Point(10, 60), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 0, 0), 2);
+        cv::putText(frame, fps_label, cv::Point(10, 60), cv::FONT_HERSHEY_DUPLEX, 1.2, cv::Scalar(255, 0, 0), 3);
 
         cv::imshow("NCNN Edge Deployment Demo", frame);
 
         //等待并判断是否退出
-        while(cv::waitKey(1) == 27){
+        if((cv::waitKey(1) & 0xFF) == 27){
             break;
         }
     }
+    std::cout << "退出推理" << std::endl;
 
     //释放硬件&销毁窗口
     cap.release();
