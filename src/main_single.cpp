@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <thread>
 #include <opencv2/opencv.hpp>
 #include "inference_engine.h"
 
@@ -21,6 +22,9 @@ int main()
     float confidence =0.0f;
     std::cout << "开始进行实时推理... " << std::endl << "按下ESC键可退出" << std::endl;
 
+    int total_frames_processed = 0;
+    auto pipeline_start_time = std::chrono::high_resolution_clock::now();
+
     // 创建一个可调整大小的窗口
     cv::namedWindow("NCNN Edge Deployment Demo", cv::WINDOW_NORMAL);
     cv::resizeWindow("NCNN Edge Deployment Demo", 1200, 800);
@@ -34,11 +38,13 @@ int main()
         cap >> frame;
         if(frame.empty()){
             std::cout << "视频流故障或已结束" << std::endl;
-            return -1;
+            break;
         }
 
         //执行推理
         int class_id = engine.Infer(frame, confidence);
+        total_frames_processed++;
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
         //记录结束时间和耗时
         auto end_time = std::chrono::high_resolution_clock::now();
@@ -59,7 +65,7 @@ int main()
 
         cv::imshow("NCNN Edge Deployment Demo", frame);
 
-        //等待并判断是否退出
+        // 等待并判断是否退出
         if((cv::waitKey(1) & 0xFF) == 27){
             break;
         }
@@ -69,6 +75,16 @@ int main()
     //释放硬件&销毁窗口
     cap.release();
     cv::destroyAllWindows();
+
+    auto pipeline_end_time = std::chrono::high_resolution_clock::now();
+    
+    // 计算总耗时 (毫秒)
+    auto total_duration = std::chrono::duration_cast<std::chrono::milliseconds>(pipeline_end_time - pipeline_start_time);
+    float total_seconds = total_duration.count() / 1000.0f;
+    
+    // 计算平均 FPS (总帧数 / 总秒数)
+    float average_fps = total_frames_processed / total_seconds;
+    std::cout << average_fps << std::endl;
 
     return 0;
 }

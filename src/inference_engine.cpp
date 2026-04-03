@@ -33,7 +33,7 @@ int InferenceEngine::Infer(const cv::Mat& frame, float& out_confidence){
 
     //每次调用函数都会生成提取器
     ncnn::Extractor ex = net_.create_extractor(); //创建前向传播处理器
-    net_.opt.num_threads = 4;
+    net_.opt.num_threads = 1;
     ex.input("data", in); //将张量in绑定到输入节点data->来自param文件
     ncnn::Mat out;
     ex.extract("prob", out);

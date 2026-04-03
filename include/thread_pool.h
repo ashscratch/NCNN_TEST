@@ -9,7 +9,7 @@
 #include <functional>
 #include <stdexcept>
 
-class thread_pool
+class Thread_pool
 {
 private:
     std::vector<std::thread> workers;
@@ -20,18 +20,18 @@ private:
     bool stop;
 
 public:
-    thread_pool(size_t threads);
+    Thread_pool(size_t threads);
 
     //接受任意对象并返回future
     template<class F, typename... Args>
     auto enqueue(F&& f, Args&&... args)
         ->std::future<typename std::result_of<F(Args...)>::type>;
 
-    ~thread_pool();
+    ~Thread_pool();
 
 };
 
-inline thread_pool::thread_pool(size_t threads): stop(false)
+inline Thread_pool::Thread_pool(size_t threads): stop(false)
 {
     for(size_t i = 0; i < threads; i++){
         workers.emplace_back([this] {
@@ -51,26 +51,26 @@ inline thread_pool::thread_pool(size_t threads): stop(false)
 }
 
 template<class F, typename... Args>
-auto thread_pool::enqueue(F&& f, Args&&... args)
+auto Thread_pool::enqueue(F&& f, Args&&... args)
     ->std::future<typename std::result_of<F(Args...)>::type>{
         using return_type = typename std::result_of<F(Args...)>::type;
 
         auto task = std::make_shared<std::packaged_task<return_type()>>(
-            std::bind(std::forward<F>f, std::forward<Args>args...)
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...)
         );
 
         std::future<return_type> res = task->get_future();
         {
             std::unique_lock<std::mutex> lock(queue_mutex);
             if(stop) throw std::runtime_error("线程池已关闭");
-            tasks.emplace( [this] { (*task)(); } );
+            tasks.emplace( [task] { (*task)(); } );
         }
         condition.notify_one();
         return res;
     }
 
 
-inline thread_pool::~thread_pool()
+inline Thread_pool::~Thread_pool()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
